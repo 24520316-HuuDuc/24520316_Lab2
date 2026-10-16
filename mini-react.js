@@ -141,3 +141,162 @@ export function createElement(type, props, ...children) {
 
   return vnode;
 }
+// ==============================
+// Commit 2: renderToDOM
+// ==============================
+
+const BOOLEAN_ATTRIBUTES = new Set([
+  "disabled",
+  "checked",
+  "selected",
+  "multiple",
+  "required",
+  "readonly",
+  "autofocus",
+  "hidden",
+  "controls",
+  "loop",
+  "muted",
+  "open"
+]);
+
+const PROP_TO_ATTRIBUTE = {
+  className: "class",
+  htmlFor: "for",
+  tabIndex: "tabindex",
+  readOnly: "readonly",
+  autoFocus: "autofocus"
+};
+
+export function renderToDOM(vnode) {
+  // Verify that the input is a valid VNode.
+  if (!isVNode(vnode)) {
+    throw new TypeError(
+      "renderToDOM expects a valid VNode."
+    );
+  }
+
+  // Text nodes must be created as text, never parsed as HTML.
+  if (vnode.type === TEXT_ELEMENT) {
+    return document.createTextNode(vnode.text);
+  }
+
+  // Create the real DOM element.
+  const element = document.createElement(vnode.type);
+
+  // Apply props safely.
+  for (const [propName, propValue] of Object.entries(vnode.props)) {
+    const lowerName = propName.toLowerCase();
+
+    // These props must not be used to inject raw HTML.
+    if (
+      lowerName === "dangerouslysetinnerhtml" ||
+      lowerName === "innerhtml" ||
+      lowerName === "outerhtml"
+    ) {
+      throw new TypeError(
+        `${propName} is not supported for security reasons.`
+      );
+    }
+
+    // Props handled internally by the VNode engine.
+    if (
+      propName === "children" ||
+      propName === "key" ||
+      propName === "ref"
+    ) {
+      continue;
+    }
+
+    if (propValue === null || propValue === undefined) {
+      continue;
+    }
+
+    // Attach event listeners instead of creating inline event attributes.
+    if (/^on/i.test(propName)) {
+      if (
+        !/^on[A-Z]/.test(propName) ||
+        typeof propValue !== "function"
+      ) {
+        throw new TypeError(
+          `Event prop "${propName}" must be a function such as onClick.`
+        );
+      }
+
+      const eventName =
+        propName === "onDoubleClick"
+          ? "dblclick"
+          : propName.slice(2).toLowerCase();
+
+      element.addEventListener(eventName, propValue);
+      continue;
+    }
+
+    // Support style objects such as { backgroundColor: "red" }.
+    if (propName === "style") {
+      if (!isPlainObject(propValue)) {
+        throw new TypeError("The style prop must be an object.");
+      }
+
+      for (const [styleName, styleValue] of Object.entries(propValue)) {
+        if (
+          styleValue === null ||
+          styleValue === undefined ||
+          typeof styleValue === "boolean"
+        ) {
+          continue;
+        }
+
+        const cssName = styleName.startsWith("--")
+          ? styleName
+          : styleName.replace(/[A-Z]/g, (letter) =>
+              `-${letter.toLowerCase()}`
+            );
+
+        element.style.setProperty(cssName, String(styleValue));
+      }
+
+      continue;
+    }
+
+    // Reject object/function props that cannot safely be HTML attributes.
+    if (
+      typeof propValue === "object" ||
+      typeof propValue === "function" ||
+      typeof propValue === "symbol"
+    ) {
+      throw new TypeError(
+        `Invalid value for prop "${propName}".`
+      );
+    }
+
+    const attributeName =
+      PROP_TO_ATTRIBUTE[propName] || propName;
+
+    if (typeof propValue === "boolean") {
+      if (
+        attributeName.startsWith("aria-") ||
+        attributeName.startsWith("data-")
+      ) {
+        element.setAttribute(attributeName, String(propValue));
+      } else if (BOOLEAN_ATTRIBUTES.has(attributeName.toLowerCase())) {
+        if (propValue) {
+          element.setAttribute(attributeName, "");
+        }
+      } else {
+        element.setAttribute(attributeName, String(propValue));
+      }
+
+      continue;
+    }
+
+    element.setAttribute(attributeName, String(propValue));
+  }
+
+  // Recursively mount children in the same order as the VNode tree.
+  for (const child of vnode.children) {
+    element.appendChild(renderToDOM(child));
+  }
+
+  return element;
+}
