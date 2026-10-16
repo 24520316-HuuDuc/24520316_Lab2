@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Reliable Async Loading",
+    "description": "Represent loading explicitly instead of leaving stale content on screen."
+  },
+  {
+    "id": 2,
+    "title": "Race Condition Protection",
+    "description": "Ignore older requests after a newer request has started."
+  },
+  {
+    "id": 3,
+    "title": "Readable Error Feedback",
+    "description": "Show a useful error message and provide a retry action."
+  },
+  {
+    "id": 4,
+    "title": "Skeleton Screen",
+    "description": "Display animated placeholders while the data is loading."
+  }
+]

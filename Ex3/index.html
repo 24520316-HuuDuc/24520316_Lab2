@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resilient Data Feed</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./state-machine.js"></script>
+</head>
+<body>
+  <main id="app" class="app-shell">
+    <header class="page-header">
+      <p class="eyebrow">EXERCISE 3</p>
+      <h1>Resilient Data Feed</h1>
+      <p class="subtitle">
+        A four-state interface with skeleton loading, error handling,
+        and safe retry behavior.
+      </p>
+    </header>
+
+    <section class="toolbar" aria-label="Feed controls">
+      <div class="state-indicator">
+        <span id="state-dot" class="state-dot" data-state="IDLE"></span>
+        <span>Current state:</span>
+        <strong id="state-label">IDLE</strong>
+      </div>
+
+      <button type="button" data-action="reload" class="button button-secondary">
+        Refresh Feed
+      </button>
+    </section>
+
+    <p id="announcer" class="sr-only" role="status" aria-live="polite"></p>
+
+    <section
+      id="feed-content"
+      class="feed-content"
+      aria-label="Feed results"
+      aria-busy="false"
+    >
+      <p class="empty-message">Preparing data feed...</p>
+    </section>
+
+    <footer class="page-footer">
+      State transitions: IDLE → LOADING → SUCCESS / ERROR
+    </footer>
+  </main>
+</body>
+</html>
